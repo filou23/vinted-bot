@@ -6,19 +6,29 @@ VINTED_USER = "289788311-mikekronoss"
 
 seen = set()
 
-def check_vinted():
+def get_page():
     url = f"https://www.vinted.fr/member/{VINTED_USER}"
-    r = requests.get(url)
-
-    # version simple (on améliorera après)
-    if "item" in r.text:
-        return True
-    return False
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+    return requests.get(url, headers=headers).text
 
 while True:
-    if check_vinted():
-        requests.post(WEBHOOK, json={
-            "content": "🆕 Nouveau article Vinted détecté !"
-        })
+    page = get_page()
+
+    # ⚠️ version simplifiée (on améliore après si tu veux)
+    items = page.split("item")
+
+    for item in items:
+        if item not in seen:
+            seen.add(item)
+
+            title = "🆕 Nouvel item Vinted"
+            price = "Prix non détecté"
+            link = f"https://www.vinted.fr/member/{VINTED_USER}"
+
+            requests.post(WEBHOOK, json={
+                "content": f"{title}\n💰 {price}\n🔗 {link}"
+            })
 
     time.sleep(60)
